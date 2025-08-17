@@ -1,0 +1,51 @@
+[
+  {
+    "id": 12701,
+    "content": "Books",
+    "weight": 3,
+    "status": "in_transit",
+    "destination": 1234
+  },
+  {
+    "id": 12702,
+    "content": "Electronics",
+    "weight": 5,
+    "status": "delivered",
+    "destination": 5678
+  },
+  {
+    "id": 12703,
+    "content": "Clothes",
+    "weight": 2,
+    "status": "placed",
+    "destination": 9101
+  },
+  {
+    "id": 12704,
+    "content": "Furniture",
+    "weight": 20,
+    "status": "in_transit",
+    "destination": 1121
+  },
+  {
+    "id": 12705,
+    "content": "Toys",
+    "weight": 4,
+    "status": "delivered",
+    "destination": 3141
+  },
+  {
+    "id": 12706,
+    "content": "Groceries",
+    "weight": 8,
+    "status": "delivered",
+    "destination": 5161
+  },
+  {
+    "content": "chair",
+    "weight": 1.0,
+    "destination": 1,
+    "status": "placed",
+    "id": 12707
+  }
+]
