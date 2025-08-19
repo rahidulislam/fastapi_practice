@@ -1,11 +1,23 @@
+from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, status
 from typing import Any
 from scalar_fastapi import get_scalar_api_reference
-from app.schemas import ShipmentRead,ShipmentCreate,ShipmentUpdate,ShipmentStatus
-from app.database import Database
+# from sqlmodel import Session
+from app.schemas import Shipment,ShipmentCreate,ShipmentUpdate,ShipmentStatus
+# from app.database import Database
+from app.database.session import create_db_tables, SessionDep
+from contextlib import asynccontextmanager
+# from app.database.models import Shipment
 
-app = FastAPI()
-db= Database()
+@asynccontextmanager
+async def lifespan_handler(app:FastAPI):
+    print("server is starting")
+    create_db_tables()
+    yield
+    print("server is shutting down")
+
+app = FastAPI(lifespan=lifespan_handler)
+# db= Database()
 
 # shipments = {
 #     1: {"content": "Books", "weight": 3, "status": "in_transit","destination": 1234},
@@ -16,9 +28,10 @@ db= Database()
 # }
 
 
-@app.get("/shipment", response_model=ShipmentRead)
-def get_shipment_list(id: int | None = None):
-    shipment= db.get(id)
+
+@app.get("/shipment", response_model=Shipment)
+def get_shipment_list(id: int | None = None, session: SessionDep=None):
+    shipment= session.get(Shipment, id)
     # if not id:
     #     id = max(shipments.keys())
     #     return shipments[id]
@@ -44,7 +57,7 @@ def get_shipment_list(id: int | None = None):
 
 
 @app.post("/shipment")
-def create_shipment(shipment: ShipmentCreate) -> dict[str,int]:
+def create_shipment(shipment: ShipmentCreate, session:SessionDep) -> dict[str,int]:
     
     # if shipment.weight > 25:
     #     raise HTTPException(
@@ -63,8 +76,16 @@ def create_shipment(shipment: ShipmentCreate) -> dict[str,int]:
     #     "id": new_id
     # }
     # save()
-    new_id = db.create(shipment)
-    return {"id":new_id}
+    # new_id = db.create(shipment)
+    new_shipment = Shipment(
+        **shipment.model_dump(),
+        status=ShipmentStatus.placed,
+        estimated_delivery=datetime.now() + timedelta(days=3)  # Example estimated delivery
+    )
+    session.add(new_shipment)
+    session.commit()
+    session.refresh(new_shipment)
+    return {"id":new_shipment.id}
 
 
 # @app.put("/shipment")
@@ -75,13 +96,14 @@ def create_shipment(shipment: ShipmentCreate) -> dict[str,int]:
 #     return shipments[id]
 
 
-@app.patch("/shipment", response_model=ShipmentRead)
+@app.patch("/shipment", response_model=Shipment)
 def patch_shipment(
     id: int,
     # content: str | None = None,
     # weight: float | None = None,
     # status: str | None = None,
-    data:ShipmentUpdate
+    shipment_update:ShipmentUpdate,
+    session:SessionDep
 ) -> dict[str, Any]:
     # print("#"*15)
     # print(data)
@@ -99,13 +121,25 @@ def patch_shipment(
     # shipment.update(data.model_dump(exclude_none=True))
     # shipments[id]=shipment
     # return shipment
-    shipment = db.update(id,data)
+    # shipment = db.update(id,data)
+    updated_data = shipment_update.model_dump(exclude_none=True)
+    if not updated_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No fields to update"
+        )
+    shipment=session.get(Shipment, id)
+    shipment.sqlmodel_update(updated_data)
+    session.add(shipment)
+    session.commit()
+    session.refresh(shipment)
+
     return shipment
 
 @app.delete("/shipment")
-def delete_shipment(id:int)->dict[str,str]:
+def delete_shipment(id:int, session:SessionDep)->dict[str,str]:
     # shipments.pop(id)
-    db.delete(id)
+    # db.delete(id)
+    session.delete(session.get(Shipment,id))
     return {"detail": f"shipment is deleted with #{id}"}
 
 @app.get("/scalar", include_in_schema=False)
