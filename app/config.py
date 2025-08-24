@@ -9,12 +9,13 @@ class DatabaseSettings(BaseSettings):
     POSTGRES_PASSWORD: str
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="./.env",
         env_ignore_empty=True,
         extra="ignore",
     )
+    @property
+    def POSTGRES_URL(self):
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 
 settings = DatabaseSettings()
-print(settings.POSTGRES_SERVER)
-print(settings.POSTGRES_PORT)

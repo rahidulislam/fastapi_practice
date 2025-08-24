@@ -12,7 +12,7 @@ class BaseShipment(SQLModel):
     destination: int
 
 
-class Shipment(BaseShipment, table=True):
+class ShipmentRead(BaseShipment, table=True):
     # __tablename__ = "shipment"
     id: int = Field(default=None, primary_key=True)
     status: ShipmentStatus
