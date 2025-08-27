@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 from typing import Annotated
-from app.config import settings
+from app.config import db_settings as settings
 
 # engine=create_engine(
 #     "sqlite:///sqlite.db", echo=True, connect_args={"check_same_thread": False}
