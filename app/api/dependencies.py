@@ -2,6 +2,7 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
 from app.database.models import Seller
+from app.database.redis import is_jti_blacklisted
 from app.database.session import get_session
 from app.services.shipment import ShipmentService
 from app.services.seller import SellerService
@@ -19,10 +20,10 @@ def get_seller_service(session: SessionDep):
     return SellerService(session)
 
 
-def get_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
     data = decode_access_token(token)
-    if data is None:
-        return HTTPException(
+    if data is None or await is_jti_blacklisted(data['jti']):
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token is invalid or expired",
         )
