@@ -1,6 +1,7 @@
 from datetime import datetime
+from uuid import UUID
 from sqlmodel import Field, SQLModel
-from app.database.models import ShipmentStatus
+from app.database.models import Seller, ShipmentStatus
 
 # def get_random_destination():
 #     return randint(10000, 99999)
@@ -12,9 +13,10 @@ class BaseShipment(SQLModel):
     destination: int
 
 
-class ShipmentRead(BaseShipment, table=True):
+class ShipmentRead(BaseShipment):
     # __tablename__ = "shipment"
-    id: int = Field(default=None, primary_key=True)
+    id: UUID
+    seller: Seller
     status: ShipmentStatus
     estimated_delivery: datetime
 
