@@ -4,6 +4,7 @@ from sqlmodel import Field, Relationship, SQLModel, Column
 from uuid import uuid4, UUID
 from datetime import datetime
 from sqlalchemy.dialects import postgresql
+from sqlalchemy import ARRAY, INTEGER
 
 class ShipmentStatus(str, Enum):
     placed = "placed"
@@ -21,10 +22,24 @@ class Shipment(SQLModel, table=True):
     estimated_delivery: datetime
     seller_id:UUID = Field(foreign_key="seller.id")
     seller: "Seller" = Relationship(back_populates="shipments", sa_relationship_kwargs={"lazy":"selectin"})
-
-class Seller(SQLModel, table=True):
-    id: UUID= Field(sa_column=Column(postgresql.UUID, default=uuid4, primary_key=True))
+    delivery_partner_id:UUID=Field(foreign_key="delivery_partner.id")
+    delivery_partner:"DeliveryPartner"=Relationship(back_populates="shipments", sa_relationship_kwargs={"lazy":"selectin"})
+    created_at: datetime=Field(sa_column=Column(postgresql.TIMESTAMP, default=datetime.now))
+class User(SQLModel):
     name: str
     email:EmailStr
     password_hash:str
+class Seller(User, table=True):
+    __tablename__ = "seller"
+    id: UUID= Field(sa_column=Column(postgresql.UUID, default=uuid4, primary_key=True))
     shipments: list["Shipment"] = Relationship(back_populates="seller", sa_relationship_kwargs={"lazy":"selectin"})
+    created_at: datetime=Field(sa_column=Column(postgresql.TIMESTAMP, default=datetime.now))
+
+
+class DeliveryPartner(User, table=True):
+    __tablename__ = "delivery_partner"
+    id: UUID= Field(sa_column=Column(postgresql.UUID, default=uuid4, primary_key=True))
+    created_at: datetime=Field(sa_column=Column(postgresql.TIMESTAMP, default=datetime.now))
+    serviceable_zip_codes: list[int] = Field(sa_column=Column(ARRAY(INTEGER)))
+    max_handling_capacity: int
+    shipments: list[Shipment]=Relationship(back_populates="delivery_partner", sa_relationship_kwargs={"lazy":"selectin"})
