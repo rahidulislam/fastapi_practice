@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from fastapi import HTTPException, status
 from typing import Any
-from app.api.dependencies import SellerDep, ServiceDep
+from app.api.dependencies import DeliveryPartnerServiceDep, SellerDep, ServiceDep
 from app.database.models import Shipment
 from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate, ShipmentRead
 
@@ -21,13 +21,15 @@ async def get_shipment_list(id: UUID, service: ServiceDep):
 
 
 @router.post("/", response_model=ShipmentRead)
-async def create_shipment(shipment: ShipmentCreate, service: ServiceDep, seller:SellerDep) -> Shipment:
+async def create_shipment(
+    shipment: ShipmentCreate, service: ServiceDep, seller: SellerDep
+) -> Shipment:
     return await service.add(shipment, seller)
 
 
 @router.patch("/", response_model=ShipmentRead)
 async def patch_shipment(
-    id: int, shipment_update: ShipmentUpdate, service: ServiceDep
+    id: UUID, shipment_update: ShipmentUpdate, service: ServiceDep, partner: DeliveryPartnerServiceDep
 ) -> dict[str, Any]:
     updated_data = shipment_update.model_dump(exclude_none=True)
     if not updated_data:
@@ -40,6 +42,6 @@ async def patch_shipment(
 
 
 @router.delete("/")
-async def delete_shipment(id: int, service: ServiceDep) -> dict[str, str]:
+async def delete_shipment(id: UUID, service: ServiceDep) -> dict[str, str]:
     await service.delete(id)
     return {"detail": f"shipment is deleted with #{id}"}
