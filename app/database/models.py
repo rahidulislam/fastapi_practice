@@ -15,6 +15,8 @@ class ShipmentStatus(str, Enum):
 class Shipment(SQLModel, table=True):
     __tablename__ = "shipment"
     id: UUID= Field(sa_column=Column(postgresql.UUID, default=uuid4, primary_key=True))
+    client_contact_email:EmailStr|None
+    client_contact_phone:str|None
     content:str
     weight:float = Field(le=25)
     timeline: list["ShipmentEvent"]=Relationship(back_populates="shipment", sa_relationship_kwargs={"lazy":"selectin"})
@@ -25,6 +27,10 @@ class Shipment(SQLModel, table=True):
     delivery_partner_id:UUID=Field(foreign_key="delivery_partner.id")
     delivery_partner:"DeliveryPartner"=Relationship(back_populates="shipments", sa_relationship_kwargs={"lazy":"selectin"})
     created_at: datetime=Field(sa_column=Column(postgresql.TIMESTAMP, default=datetime.now))
+
+    @property
+    def status(self):
+        return self.timeline[-1].status if len(self.timeline)>0 else None
 
 class ShipmentEvent(SQLModel, table=True):
     __tablename__ = "shipment_event"

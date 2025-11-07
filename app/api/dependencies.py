@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends, HTTPException, status
+from fastapi import BackgroundTasks, Depends, HTTPException, status
 from app.database.models import DeliveryPartner, Seller
 from app.database.redis import is_jti_blacklisted
 from app.database.session import get_session
@@ -9,13 +9,14 @@ from app.services.delivery_partner import DeliveryPartnerService
 from app.services.shipment import ShipmentService
 from app.services.seller import SellerService
 from app.core.security import oauth2_scheme_seller, oauth2_scheme_partner
+from app.services.shipment_event import ShipmentEventService
 from app.utils import decode_access_token
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-def get_shipment_service(session: SessionDep):
-    return ShipmentService(session,DeliveryPartnerService(session))
+def get_shipment_service(session: SessionDep, tasks:BackgroundTasks):
+    return ShipmentService(session,DeliveryPartnerService(session), ShipmentEventService(session, tasks))
 
 
 def get_seller_service(session: SessionDep):

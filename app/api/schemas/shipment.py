@@ -1,7 +1,8 @@
 from datetime import datetime
 from uuid import UUID
+from pydantic import BaseModel, EmailStr
 from sqlmodel import Field, SQLModel
-from app.database.models import Seller, ShipmentStatus
+from app.database.models import Seller, ShipmentEvent, ShipmentStatus
 
 # def get_random_destination():
 #     return randint(10000, 99999)
@@ -17,17 +18,17 @@ class ShipmentRead(BaseShipment):
     # __tablename__ = "shipment"
     id: UUID
     seller: Seller
-    status: ShipmentStatus
+    timeline: list[ShipmentEvent]
     estimated_delivery: datetime
 
 
 class ShipmentCreate(BaseShipment):
-    pass
+    client_contact_email: EmailStr | None = Field(default=None)
+    client_contact_phone: str | None = Field(default=None)
 
 
-class ShipmentUpdate(SQLModel):
-    content: str | None = Field(default=None, max_length=30)
-    weight: float | None = Field(default=None, le=25, ge=1)
-    destination: int | None = Field(default=None)
+class ShipmentUpdate(BaseModel):
+    location: int | None = Field(default=None)
     status: ShipmentStatus | None = Field(default=None)
+    description: str | None = Field(default=None)
     estimated_delivery: datetime | None = Field(default=None)

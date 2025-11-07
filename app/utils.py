@@ -1,10 +1,13 @@
 
+from pathlib import Path
 from fastapi import HTTPException, status
 import jwt
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from app.config import security_settings
 
+APP_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = APP_DIR / "templates"
 def generate_access_token(data:dict, expiry:timedelta=timedelta(days=1))->str:
     return jwt.encode(
             payload={
