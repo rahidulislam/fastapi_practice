@@ -50,26 +50,38 @@ class ShipmentEventService(BaseService):
                 return f"scanned at {location}"
 
     async def _notify(self, shipment: Shipment, status:ShipmentStatus):
+        if status == ShipmentStatus.in_transit:
+            return
+        
+        subject: str
+        context= {}
+        template_name: str
         match status:
             case ShipmentStatus.placed:
-                await self.notification_service.send_templated_email(
-                    subject="Your Order is Shipped",
-                    recipients=[shipment.client_contact_email],
-                    context={
-                        "seller": shipment.seller.name,
-                        "partner": shipment.delivery_partner.name,
-                    },
-                    template_name="mail_placed.html",
-                )
+                subject="Your Order is Shipped"
+                context["seller"] = shipment.seller.name
+                context["partner"] = shipment.delivery_partner.name
+                template_name="mail_placed.html"
 
-                await self.notification_service.send_email(
-                    subject="Shipment Placed",
-                    recipients = [shipment.client_contact_email],
-                    body=f"Your order with {shipment.seller.name} is picked up by {shipment.delivery_partner.name} and is on its way.",
-                )
+                # await self.notification_service.send_email(
+                #     subject="Shipment Placed",
+                #     recipients = [shipment.client_contact_email],
+                #     body=f"Your order with {shipment.seller.name} is picked up by {shipment.delivery_partner.name} and is on its way.",
+                # )
             case ShipmentStatus.out_for_delivery:
-                await self.notification_service.send_email(
-                    subject="Shipment is out for delivery",
-                    recipients = [shipment.client_contact_email],
-                    body=f"Your order is out for delivery by {shipment.delivery_partner.name}.",
+                subject="Shipment is out for delivery"
+                context["seller"] = shipment.seller.name
+                context["partner"] = shipment.delivery_partner.name
+                template_name="mail_out_for_delivery.html"
+
+                # await self.notification_service.send_email(
+                #     subject="Shipment is out for delivery",
+                #     recipients = [shipment.client_contact_email],
+                #     body=f"Your order is out for delivery by {shipment.delivery_partner.name}.",
+                # )
+        await self.notification_service.send_templated_email(
+                    subject=subject,
+                    recipients=[shipment.client_contact_email],
+                    context=context,
+                    template_name=template_name
                 )
