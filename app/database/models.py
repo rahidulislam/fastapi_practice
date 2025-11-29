@@ -44,7 +44,8 @@ class ShipmentEvent(SQLModel, table=True):
 class User(SQLModel):
     name: str
     email:EmailStr
-    password_hash:str
+    email_verified: bool = Field(default=False)
+    password_hash:str = Field(exclude=True)
 class Seller(User, table=True):
     __tablename__ = "seller"
     id: UUID= Field(sa_column=Column(postgresql.UUID, default=uuid4, primary_key=True))
